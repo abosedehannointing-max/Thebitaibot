@@ -16,74 +16,69 @@ logger = logging.getLogger(__name__)
 # Store user progress
 user_progress = {}
 
-# Welcome Message (plain text - no Markdown)
-WELCOME_MSG = """🚀 Welcome to BitAI by Affinity AI
+# Video URLs (must be direct video links - use file upload or streaming URLs)
+# For Google Drive, you need to use the direct download link or upload videos to Telegram
+WELCOME_VIDEO = "https://drive.google.com/uc?export=download&id=1STOhv9qCUe5RxnwvSF9koJoLswOLIpD_"
+VIDEO_1 = "https://drive.google.com/uc?export=download&id=1TGACWYMSRR2x8NLkQgA3-_JgH-fUJUBg"
+VIDEO_2 = "https://drive.google.com/uc?export=download&id=1VLidHqhUWQv6K_6Q0s3GYHVKPBgkeVxt"
+VIDEO_3 = "https://drive.google.com/uc?export=download&id=1pSg-u3q4YvoZHB3DETFyBQFjRGczoCJj"
+VIDEO_4 = "https://drive.google.com/uc?export=download&id=1nUcCkcp_jv6FN6hwHxIADmxktlG6-M6k"
+VIDEO_5 = "https://drive.google.com/uc?export=download&id=1bRXrOM-I0UuoBWetbX-EcspvAniU6x4D"
+VIDEO_6 = "https://drive.google.com/uc?export=download&id=1-WystTVv0Wwawhak6xBZlU0yXyTChZmP"
+
+# Message texts (without video links)
+WELCOME_TEXT = """🚀 *Welcome to BitAI by Affinity AI*
 
 Most crypto traders don't lose because they lack knowledge.
 They lose because manual trading is emotional, bot settings are messy, and execution comes too late.
 
-It's time to upgrade to BitAI - built to analyze real-time market data and execute your trades automatically, 24/7.
+It's time to upgrade to BitAI - built to analyze real-time market data and execute your trades automatically, 24/7."""
 
-📹 Video: https://drive.google.com/file/d/1STOhv9qCUe5RxnwvSF9koJoLswOLIpD_/view?usp=sharing"""
-
-# Step Messages (plain text - no Markdown)
-STEP1_MSG = """📌 Step 1/6: Prepare Your Binance Account
+STEP1_TEXT = """📌 *Step 1/6: Prepare Your Binance Account*
 
 To start using BitAI, you need a Binance account with KYC verification completed.
 
-✅ Already have a verified Binance account?
-You may skip this step and continue to BitAI License Activation.
+✅ *Already have a verified Binance account?*
+You may skip this step and continue to BitAI License Activation."""
 
-📹 Video: https://drive.google.com/file/d/1TGACWYMSRR2x8NLkQgA3-_JgH-fUJUBg/view?usp=sharing"""
-
-STEP2_MSG = """📌 Step 2/6: BitAI License Activation
+STEP2_TEXT = """📌 *Step 2/6: BitAI License Activation*
 
 To unlock BitAI's full auto AI trading, activate your BitAI License inside your BitAI app.
 
-Once activated, you can proceed to activate & enable your Binance Futures.
+Once activated, you can proceed to activate & enable your Binance Futures."""
 
-📹 Video: https://drive.google.com/file/d/1VLidHqhUWQv6K_6Q0s3GYHVKPBgkeVxt/view?usp=sharing"""
-
-STEP3_MSG = """📌 Step 3/6: Activate & Enable Binance Futures
+STEP3_TEXT = """📌 *Step 3/6: Activate & Enable Binance Futures*
 
 Before BitAI can execute, you need to activate Binance Futures inside your Binance account.
 
-Once Futures is enabled, you can continue to the next step and create your Binance API connection.
+Once Futures is enabled, you can continue to the next step and create your Binance API connection."""
 
-📹 Video: https://drive.google.com/file/d/1pSg-u3q4YvoZHB3DETFyBQFjRGczoCJj/view?usp=sharing"""
-
-STEP4_MSG = """📌 Step 4/6: Set Up Your API Keys
+STEP4_TEXT = """📌 *Step 4/6: Set Up Your API Keys*
 
 Next, create your Binance API Keys and connect them to your BitAI account.
 
 This allows BitAI to analyze real-time market data and execute based on your selected risk profile.
 
-⚠️ Make sure your API Keys are kept private and only connected inside the official BitAI platform.
+⚠️ *Make sure your API Keys are kept private and only connected inside the official BitAI platform.*"""
 
-📹 Video: https://drive.google.com/file/d/1nUcCkcp_jv6FN6hwHxIADmxktlG6-M6k/view?usp=sharing"""
-
-STEP5_MSG = """📌 Step 5/6: Transfer USDT to Binance Futures
+STEP5_TEXT = """📌 *Step 5/6: Transfer USDT to Binance Futures*
 
 Before BitAI can execute, make sure your USDT is transferred into your own Binance Futures Wallet.
 
 This will be the capital used for BitAI's AI-driven execution based on your selected risk profile.
 
-Once completed, continue to Select Risk Profile.
+Once completed, continue to Select Risk Profile."""
 
-📹 Video: https://drive.google.com/file/d/1bRXrOM-I0UuoBWetbX-EcspvAniU6x4D/view?usp=sharing"""
-
-STEP6_MSG = """📌 Step 6/6: Select Your Risk Profile
+STEP6_TEXT = """📌 *Step 6/6: Select Your Risk Profile*
 
 Choose your preferred BitAI Risk Profile based on your capital, goals, and risk appetite.
 
 BitAI will execute according to the risk level you select.
 
-Once done, BitAI will start to analyze real time market data and execute your trades automatically! 🎉
-
-📹 Video: https://drive.google.com/file/d/1-WystTVv0Wwawhak6xBZlU0yXyTChZmP/view?usp=sharing"""
+Once done, BitAI will start to analyze real time market data and execute your trades automatically! 🎉"""
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Start command"""
+    """Start command - sends welcome video and message"""
     user_id = update.effective_user.id
     user_progress[user_id] = 0
     
@@ -95,10 +90,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(WELCOME_MSG, reply_markup=reply_markup)
+    # Send video first (embedded, not as link)
+    try:
+        await update.message.reply_video(
+            video=WELCOME_VIDEO,
+            caption=WELCOME_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        logger.error(f"Failed to send video: {e}")
+        # Fallback to text only if video fails
+        await update.message.reply_text(WELCOME_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def show_step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show Step 1"""
+    """Show Step 1 with embedded video"""
     keyboard = [
         [InlineKeyboardButton("🔗 Create Binance Account", url="https://accounts.binance.com/en/register?ref=1154159582")],
         [InlineKeyboardButton("📱 Download Binance App", url="https://www.binance.com/en/download")],
@@ -109,9 +115,20 @@ async def show_step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP1_MSG, reply_markup=reply_markup)
+        await update.callback_query.delete_message()
+        await update.callback_query.message.chat.send_video(
+            video=VIDEO_1,
+            caption=STEP1_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
     else:
-        await update.message.reply_text(STEP1_MSG, reply_markup=reply_markup)
+        await update.message.reply_video(
+            video=VIDEO_1,
+            caption=STEP1_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
 
 async def step1_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 1 is done"""
@@ -119,7 +136,8 @@ async def step1_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ Great! Step 1 completed!\n\nMoving to Step 2..."
+        "✅ *Great! Step 1 completed!*\n\nMoving to Step 2...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
@@ -131,14 +149,15 @@ async def step1_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ Step 1 skipped\n\nMoving to Step 2..."
+        "⏩ *Step 1 skipped*\n\nMoving to Step 2...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
     await show_step2(update, context)
 
 async def show_step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show Step 2"""
+    """Show Step 2 with embedded video"""
     keyboard = [
         [InlineKeyboardButton("📝 Register BitAI", url="https://app.bitai.com.sg/h5/#/pages/sign/sign?invite=888")],
         [InlineKeyboardButton("📱 Download BitAI App", url="https://fir.bitai.app/app.html")],
@@ -150,9 +169,20 @@ async def show_step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP2_MSG, reply_markup=reply_markup)
+        await update.callback_query.delete_message()
+        await update.callback_query.message.chat.send_video(
+            video=VIDEO_2,
+            caption=STEP2_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
     else:
-        await update.message.reply_text(STEP2_MSG, reply_markup=reply_markup)
+        await update.message.reply_video(
+            video=VIDEO_2,
+            caption=STEP2_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
 
 async def step2_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 2 is done"""
@@ -160,7 +190,8 @@ async def step2_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ Great! Step 2 completed!\n\nMoving to Step 3..."
+        "✅ *Great! Step 2 completed!*\n\nMoving to Step 3...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
@@ -172,14 +203,15 @@ async def step2_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ Step 2 skipped\n\nMoving to Step 3..."
+        "⏩ *Step 2 skipped*\n\nMoving to Step 3...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
     await show_step3(update, context)
 
 async def show_step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show Step 3"""
+    """Show Step 3 with embedded video"""
     keyboard = [
         [InlineKeyboardButton("✅ Done - I enabled Futures", callback_data="step3_done")],
         [InlineKeyboardButton("⏩ Skip to Step 4", callback_data="step3_skip")],
@@ -189,9 +221,20 @@ async def show_step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP3_MSG, reply_markup=reply_markup)
+        await update.callback_query.delete_message()
+        await update.callback_query.message.chat.send_video(
+            video=VIDEO_3,
+            caption=STEP3_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
     else:
-        await update.message.reply_text(STEP3_MSG, reply_markup=reply_markup)
+        await update.message.reply_video(
+            video=VIDEO_3,
+            caption=STEP3_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
 
 async def step3_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 3 is done"""
@@ -199,7 +242,8 @@ async def step3_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ Great! Step 3 completed!\n\nMoving to Step 4..."
+        "✅ *Great! Step 3 completed!*\n\nMoving to Step 4...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
@@ -211,14 +255,15 @@ async def step3_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ Step 3 skipped\n\nMoving to Step 4..."
+        "⏩ *Step 3 skipped*\n\nMoving to Step 4...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
     await show_step4(update, context)
 
 async def show_step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show Step 4"""
+    """Show Step 4 with embedded video"""
     keyboard = [
         [InlineKeyboardButton("✅ Done - I set up API Keys", callback_data="step4_done")],
         [InlineKeyboardButton("⏩ Skip to Step 5", callback_data="step4_skip")],
@@ -228,9 +273,20 @@ async def show_step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP4_MSG, reply_markup=reply_markup)
+        await update.callback_query.delete_message()
+        await update.callback_query.message.chat.send_video(
+            video=VIDEO_4,
+            caption=STEP4_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
     else:
-        await update.message.reply_text(STEP4_MSG, reply_markup=reply_markup)
+        await update.message.reply_video(
+            video=VIDEO_4,
+            caption=STEP4_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
 
 async def step4_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 4 is done"""
@@ -238,7 +294,8 @@ async def step4_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ Great! Step 4 completed!\n\nMoving to Step 5..."
+        "✅ *Great! Step 4 completed!*\n\nMoving to Step 5...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
@@ -250,14 +307,15 @@ async def step4_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ Step 4 skipped\n\nMoving to Step 5..."
+        "⏩ *Step 4 skipped*\n\nMoving to Step 5...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
     await show_step5(update, context)
 
 async def show_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show Step 5"""
+    """Show Step 5 with embedded video"""
     keyboard = [
         [InlineKeyboardButton("✅ Done - I transferred USDT", callback_data="step5_done")],
         [InlineKeyboardButton("⏩ Skip to Step 6", callback_data="step5_skip")],
@@ -267,9 +325,20 @@ async def show_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP5_MSG, reply_markup=reply_markup)
+        await update.callback_query.delete_message()
+        await update.callback_query.message.chat.send_video(
+            video=VIDEO_5,
+            caption=STEP5_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
     else:
-        await update.message.reply_text(STEP5_MSG, reply_markup=reply_markup)
+        await update.message.reply_video(
+            video=VIDEO_5,
+            caption=STEP5_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
 
 async def step5_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 5 is done"""
@@ -277,7 +346,8 @@ async def step5_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ Great! Step 5 completed!\n\nMoving to final Step 6..."
+        "✅ *Great! Step 5 completed!*\n\nMoving to final Step 6...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
@@ -289,14 +359,15 @@ async def step5_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ Step 5 skipped\n\nMoving to final Step 6..."
+        "⏩ *Step 5 skipped*\n\nMoving to final Step 6...",
+        parse_mode='Markdown'
     )
     
     await asyncio.sleep(1)
     await show_step6(update, context)
 
 async def show_step6(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show Step 6 - Final"""
+    """Show Step 6 - Final with embedded video"""
     keyboard = [
         [InlineKeyboardButton("✅ Done - Setup Complete!", callback_data="step6_done")],
         [InlineKeyboardButton("◀️ Back to Step 5", callback_data="step5_back")],
@@ -307,25 +378,36 @@ async def show_step6(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP6_MSG, reply_markup=reply_markup)
+        await update.callback_query.delete_message()
+        await update.callback_query.message.chat.send_video(
+            video=VIDEO_6,
+            caption=STEP6_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
     else:
-        await update.message.reply_text(STEP6_MSG, reply_markup=reply_markup)
+        await update.message.reply_video(
+            video=VIDEO_6,
+            caption=STEP6_TEXT,
+            reply_markup=reply_markup,
+            parse_mode='Markdown'
+        )
 
 async def step6_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User completed all steps"""
     query = update.callback_query
     await query.answer()
     
-    completion_msg = """🎉 CONGRATULATIONS! Setup Complete! 🎉
+    completion_msg = """🎉 *CONGRATULATIONS! Setup Complete!* 🎉
 
 You've successfully completed all steps!
 
-✨ BitAI is now ready to:
+✨ *BitAI is now ready to:*
 • 📊 Analyze real-time market data
 • 🤖 Execute trades automatically
 • 💎 Run 24/7
 
-Select your Risk Profile in the BitAI App to start trading!
+*Select your Risk Profile in the BitAI App to start trading!*
 
 Need help? Contact our support team anytime.
 
@@ -337,7 +419,7 @@ Thank you for choosing BitAI! 🚀"""
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(completion_msg, reply_markup=reply_markup)
+    await query.edit_message_text(completion_msg, reply_markup=reply_markup, parse_mode='Markdown')
 
 async def restart_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Restart the entire setup"""
@@ -411,8 +493,8 @@ def main():
     application.add_handler(CallbackQueryHandler(restart_setup, pattern="^restart$"))
     
     # Start bot
-    print("Bot is running...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("Bot is running with embedded videos...")
+    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
