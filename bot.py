@@ -1,6 +1,7 @@
 import logging
 import os
 import asyncio
+import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -16,8 +17,7 @@ logger = logging.getLogger(__name__)
 # Store user progress
 user_progress = {}
 
-# Video URLs (must be direct video links - use file upload or streaming URLs)
-# For Google Drive, you need to use the direct download link or upload videos to Telegram
+# Video URLs (Google Drive direct download links)
 WELCOME_VIDEO = "https://drive.google.com/uc?export=download&id=1STOhv9qCUe5RxnwvSF9koJoLswOLIpD_"
 VIDEO_1 = "https://drive.google.com/uc?export=download&id=1TGACWYMSRR2x8NLkQgA3-_JgH-fUJUBg"
 VIDEO_2 = "https://drive.google.com/uc?export=download&id=1VLidHqhUWQv6K_6Q0s3GYHVKPBgkeVxt"
@@ -90,7 +90,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Send video first (embedded, not as link)
+    # Send video embedded (not as link)
     try:
         await update.message.reply_video(
             video=WELCOME_VIDEO,
@@ -454,7 +454,16 @@ async def back_to_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_step5(update, context)
 
 def main():
-    """Start the bot"""
+    """Start the bot with conflict prevention"""
+    # Delete any existing webhook and clear updates to prevent conflicts
+    try:
+        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook")
+        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset=-1&timeout=1")
+        logger.info("Cleared existing webhook and updates")
+    except Exception as e:
+        logger.warning(f"Could not clear webhook: {e}")
+    
+    # Build the application
     application = Application.builder().token(BOT_TOKEN).build()
     
     # Command handlers
@@ -492,9 +501,14 @@ def main():
     application.add_handler(CallbackQueryHandler(step6_done, pattern="^step6_done$"))
     application.add_handler(CallbackQueryHandler(restart_setup, pattern="^restart$"))
     
-    # Start bot
-    print("Bot is running with embedded videos...")
-    application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
+    # Start bot with conflict prevention settings
+    logger.info("Bot is starting with embedded videos...")
+    application.run_polling(
+        drop_pending_updates=True,  # Skip old queued messages
+        allowed_updates=Update.ALL_TYPES,
+        poll_interval=1.0,
+        timeout=30
+    )
 
 if __name__ == "__main__":
     main()
