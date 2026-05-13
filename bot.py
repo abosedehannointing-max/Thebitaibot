@@ -1,9 +1,12 @@
 import logging
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# Bot token - set this in Render environment variables
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+# Get bot token from environment variable
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("No TELEGRAM_BOT_TOKEN found in environment variables")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -113,19 +116,14 @@ async def step1_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 1 is done"""
     query = update.callback_query
     await query.answer()
-    user_id = query.from_user.id
     
-    # Send confirmation message
     await query.edit_message_text(
         "✅ *Great! Step 1 completed!*\n\nMoving to Step 2...",
         parse_mode='Markdown'
     )
     
-    # Wait 1 second then show next step
     import asyncio
     await asyncio.sleep(1)
-    
-    # Show Step 2
     await show_step2(update, context)
 
 async def step1_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -140,7 +138,6 @@ async def step1_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step2(update, context)
 
 async def show_step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -172,7 +169,6 @@ async def step2_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step3(update, context)
 
 async def step2_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -187,7 +183,6 @@ async def step2_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step3(update, context)
 
 async def show_step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -217,7 +212,6 @@ async def step3_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step4(update, context)
 
 async def step3_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -232,7 +226,6 @@ async def step3_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step4(update, context)
 
 async def show_step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -262,7 +255,6 @@ async def step4_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step5(update, context)
 
 async def step4_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -277,7 +269,6 @@ async def step4_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step5(update, context)
 
 async def show_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -307,7 +298,6 @@ async def step5_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step6(update, context)
 
 async def step5_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -322,7 +312,6 @@ async def step5_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     import asyncio
     await asyncio.sleep(1)
-    
     await show_step6(update, context)
 
 async def show_step6(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -373,7 +362,6 @@ async def restart_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Restart the entire setup"""
     query = update.callback_query
     await query.answer()
-    
     await start(update, context)
 
 # Back navigation handlers
