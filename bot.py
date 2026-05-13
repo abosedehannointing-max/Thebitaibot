@@ -1,6 +1,4 @@
 import logging
-import asyncio
-from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -11,11 +9,10 @@ BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Store user data (in production, use database - for simplicity, using dict)
-user_data = {}
-user_reminders = {}
+# Store user progress
+user_progress = {}
 
-# Messages
+# Welcome Message
 WELCOME_MSG = """🚀 *Welcome to BitAI by Affinity AI*
 
 Most crypto traders don't lose because they lack knowledge.
@@ -25,16 +22,17 @@ It's time to upgrade to BitAI - built to analyze real-time market data and execu
 
 📹 *Video:* https://drive.google.com/file/d/1STOhv9qCUe5RxnwvSF9koJoLswOLIpD_/view?usp=sharing"""
 
-MSG_1 = """📌 *Step 1/6: Prepare Your Binance Account*
+# Step Messages
+STEP1_MSG = """📌 *Step 1/6: Prepare Your Binance Account*
 
 To start using BitAI, you need a Binance account with KYC verification completed.
 
 ✅ *Already have a verified Binance account?*
-You may skip this video and continue to BitAI License Activation.
+You may skip this step and continue to BitAI License Activation.
 
 📹 *Video:* https://drive.google.com/file/d/1TGACWYMSRR2x8NLkQgA3-_JgH-fUJUBg/view?usp=sharing"""
 
-MSG_2 = """📌 *Step 2/6: BitAI License Activation*
+STEP2_MSG = """📌 *Step 2/6: BitAI License Activation*
 
 To unlock BitAI's full auto AI trading, activate your BitAI License inside your BitAI app.
 
@@ -42,7 +40,7 @@ Once activated, you can proceed to activate & enable your Binance Futures.
 
 📹 *Video:* https://drive.google.com/file/d/1VLidHqhUWQv6K_6Q0s3GYHVKPBgkeVxt/view?usp=sharing"""
 
-MSG_3 = """📌 *Step 3/6: Activate & Enable Binance Futures*
+STEP3_MSG = """📌 *Step 3/6: Activate & Enable Binance Futures*
 
 Before BitAI can execute, you need to activate Binance Futures inside your Binance account.
 
@@ -50,7 +48,7 @@ Once Futures is enabled, you can continue to the next step and create your Binan
 
 📹 *Video:* https://drive.google.com/file/d/1pSg-u3q4YvoZHB3DETFyBQFjRGczoCJj/view?usp=sharing"""
 
-MSG_4 = """📌 *Step 4/6: Set Up Your API Keys*
+STEP4_MSG = """📌 *Step 4/6: Set Up Your API Keys*
 
 Next, create your Binance API Keys and connect them to your BitAI account.
 
@@ -60,7 +58,7 @@ This allows BitAI to analyze real-time market data and execute based on your sel
 
 📹 *Video:* https://drive.google.com/file/d/1nUcCkcp_jv6FN6hwHxIADmxktlG6-M6k/view?usp=sharing"""
 
-MSG_5 = """📌 *Step 5/6: Transfer USDT to Binance Futures*
+STEP5_MSG = """📌 *Step 5/6: Transfer USDT to Binance Futures*
 
 Before BitAI can execute, make sure your USDT is transferred into your own Binance Futures Wallet.
 
@@ -70,7 +68,7 @@ Once completed, continue to Select Risk Profile.
 
 📹 *Video:* https://drive.google.com/file/d/1bRXrOM-I0UuoBWetbX-EcspvAniU6x4D/view?usp=sharing"""
 
-MSG_6 = """📌 *Step 6/6: Select Your Risk Profile*
+STEP6_MSG = """📌 *Step 6/6: Select Your Risk Profile*
 
 Choose your preferred BitAI Risk Profile based on your capital, goals, and risk appetite.
 
@@ -81,330 +79,371 @@ Once done, BitAI will start to analyze real time market data and execute your tr
 📹 *Video:* https://drive.google.com/file/d/1-WystTVv0Wwawhak6xBZlU0yXyTChZmP/view?usp=sharing"""
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start command"""
     user_id = update.effective_user.id
-    user_data[user_id] = {"step": 0, "tasks": {}}
-    await show_welcome(update, context)
-
-async def show_welcome(update, context):
-    keyboard = [
-        [InlineKeyboardButton("📝 Register my FREE BitAI account", url="https://app.bitai.com.sg/h5/#/pages/sign/sign?invite=888")],
-        [InlineKeyboardButton("📱 Download BitAI (iOS & Android)", url="https://fir.bitai.app/app.html")],
-        [InlineKeyboardButton("📹 Watch BitAI Setup Video", callback_data="next_step_binance")],
-        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(WELCOME_MSG, reply_markup=reply_markup, parse_mode='Markdown')
-    else:
-        await update.message.reply_text(WELCOME_MSG, reply_markup=reply_markup, parse_mode='Markdown')
-
-async def show_step1(update, context):
-    user_id = update.effective_user.id
-    if user_data.get(user_id, {}).get("tasks", {}).get("step1") == "done":
-        await show_step2(update, context)
-        return
+    user_progress[user_id] = 0
     
     keyboard = [
-        [InlineKeyboardButton("🔗 Create a FREE Binance account", url="https://accounts.binance.com/en/register?ref=1154159582")],
-        [InlineKeyboardButton("📱 Download Binance", url="https://www.binance.com/en/download")],
-        [InlineKeyboardButton("✅ I have created my Binance account", callback_data="confirm_step1")],
-        [InlineKeyboardButton("⏩ Skip to License Activation", callback_data="skip_step1")],
-        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(MSG_1, reply_markup=reply_markup, parse_mode='Markdown')
-    else:
-        await update.message.reply_text(MSG_1, reply_markup=reply_markup, parse_mode='Markdown')
-    
-    # Schedule 6-hour reminder
-    schedule_reminder(user_id, "step1", context)
-
-async def show_step2(update, context):
-    user_id = update.effective_user.id
-    if user_data.get(user_id, {}).get("tasks", {}).get("step2") == "done":
-        await show_step3(update, context)
-        return
-    
-    keyboard = [
-        [InlineKeyboardButton("⏩ Skip to Activate Futures", callback_data="skip_step2")],
         [InlineKeyboardButton("📝 Register FREE BitAI", url="https://app.bitai.com.sg/h5/#/pages/sign/sign?invite=888")],
         [InlineKeyboardButton("📱 Download BitAI", url="https://fir.bitai.app/app.html")],
-        [InlineKeyboardButton("✅ I have activated my license", callback_data="confirm_step2")],
+        [InlineKeyboardButton("▶️ Start Setup", callback_data="next_step")],
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(WELCOME_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def show_step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show Step 1"""
+    keyboard = [
+        [InlineKeyboardButton("🔗 Create Binance Account", url="https://accounts.binance.com/en/register?ref=1154159582")],
+        [InlineKeyboardButton("📱 Download Binance App", url="https://www.binance.com/en/download")],
+        [InlineKeyboardButton("✅ Done - I completed Step 1", callback_data="step1_done")],
+        [InlineKeyboardButton("⏩ Skip to Step 2", callback_data="step1_skip")],
         [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(MSG_2, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP1_MSG, reply_markup=reply_markup, parse_mode='Markdown')
     else:
-        await update.message.reply_text(MSG_2, reply_markup=reply_markup, parse_mode='Markdown')
-    
-    schedule_reminder(user_id, "step2", context)
+        await update.message.reply_text(STEP1_MSG, reply_markup=reply_markup, parse_mode='Markdown')
 
-async def show_step3(update, context):
-    user_id = update.effective_user.id
-    if user_data.get(user_id, {}).get("tasks", {}).get("step3") == "done":
-        await show_step4(update, context)
-        return
-    
-    keyboard = [
-        [InlineKeyboardButton("⏩ Skip to Setting API Keys", callback_data="skip_step3")],
-        [InlineKeyboardButton("◀️ Back to License Activation", callback_data="back_step2")],
-        [InlineKeyboardButton("✅ I have enabled Futures", callback_data="confirm_step3")],
-        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(MSG_3, reply_markup=reply_markup, parse_mode='Markdown')
-    else:
-        await update.message.reply_text(MSG_3, reply_markup=reply_markup, parse_mode='Markdown')
-    
-    schedule_reminder(user_id, "step3", context)
-
-async def show_step4(update, context):
-    user_id = update.effective_user.id
-    if user_data.get(user_id, {}).get("tasks", {}).get("step4") == "done":
-        await show_step5(update, context)
-        return
-    
-    keyboard = [
-        [InlineKeyboardButton("⏩ Skip to Transferring USDT", callback_data="skip_step4")],
-        [InlineKeyboardButton("◀️ Back to Enable Futures", callback_data="back_step3")],
-        [InlineKeyboardButton("✅ I have connected API Keys", callback_data="confirm_step4")],
-        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(MSG_4, reply_markup=reply_markup, parse_mode='Markdown')
-    else:
-        await update.message.reply_text(MSG_4, reply_markup=reply_markup, parse_mode='Markdown')
-    
-    schedule_reminder(user_id, "step4", context)
-
-async def show_step5(update, context):
-    user_id = update.effective_user.id
-    if user_data.get(user_id, {}).get("tasks", {}).get("step5") == "done":
-        await show_step6(update, context)
-        return
-    
-    keyboard = [
-        [InlineKeyboardButton("⏩ Skip to Select Risk Profile", callback_data="skip_step5")],
-        [InlineKeyboardButton("◀️ Back to API Setup", callback_data="back_step4")],
-        [InlineKeyboardButton("✅ I have transferred USDT", callback_data="confirm_step5")],
-        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(MSG_5, reply_markup=reply_markup, parse_mode='Markdown')
-    else:
-        await update.message.reply_text(MSG_5, reply_markup=reply_markup, parse_mode='Markdown')
-    
-    schedule_reminder(user_id, "step5", context)
-
-async def show_step6(update, context):
-    keyboard = [
-        [InlineKeyboardButton("◀️ Back to Transfer USDT", callback_data="back_step5")],
-        [InlineKeyboardButton("❓ Frequently Answered Questions", url="https://bitai.app/faq")],
-        [InlineKeyboardButton("📧 Email support: info@bitai.app", url="mailto:info@bitai.app")],
-        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")],
-        [InlineKeyboardButton("🚪 Exit Conversation", callback_data="exit")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    complete_msg = """🎉 *Congratulations! Setup Complete!* 🎉
-
-BitAI will now:
-- 📊 Analyze real-time market data
-- 🤖 Execute trades automatically
-- 💎 Run 24/7
-
-*Select your Risk Profile in the BitAI App to start!*
-
-Need help? Contact support anytime."""
-    
-    if update.callback_query:
-        await update.callback_query.edit_message_text(complete_msg, reply_markup=reply_markup, parse_mode='Markdown')
-    else:
-        await update.message.reply_text(complete_msg, reply_markup=reply_markup, parse_mode='Markdown')
-
-async def confirm_step(update: Update, context: ContextTypes.DEFAULT_TYPE, step: int):
+async def step1_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User confirmed Step 1 is done"""
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
     
-    if user_id not in user_data:
-        user_data[user_id] = {"step": 0, "tasks": {}}
-    
-    user_data[user_id]["tasks"][f"step{step}"] = "done"
-    
-    # Clear reminder
-    if user_id in user_reminders and f"step{step}" in user_reminders[user_id]:
-        del user_reminders[user_id][f"step{step}"]
-    
-    # Go to next step
-    if step == 1:
-        await show_step2(update, context)
-    elif step == 2:
-        await show_step3(update, context)
-    elif step == 3:
-        await show_step4(update, context)
-    elif step == 4:
-        await show_step5(update, context)
-    elif step == 5:
-        await show_step6(update, context)
-
-async def skip_step(update: Update, context: ContextTypes.DEFAULT_TYPE, step: int):
-    query = update.callback_query
-    await query.answer()
-    user_id = query.from_user.id
-    
-    if user_id not in user_data:
-        user_data[user_id] = {"step": 0, "tasks": {}}
-    
-    user_data[user_id]["tasks"][f"step{step}"] = "skipped"
-    
-    # Go to next step
-    if step == 1:
-        await show_step2(update, context)
-    elif step == 2:
-        await show_step3(update, context)
-    elif step == 3:
-        await show_step4(update, context)
-    elif step == 4:
-        await show_step5(update, context)
-    elif step == 5:
-        await show_step6(update, context)
-
-async def back_step(update: Update, context: ContextTypes.DEFAULT_TYPE, step: int):
-    query = update.callback_query
-    await query.answer()
-    
-    if step == 2:
-        await show_step1(update, context)
-    elif step == 3:
-        await show_step2(update, context)
-    elif step == 4:
-        await show_step3(update, context)
-    elif step == 5:
-        await show_step4(update, context)
-
-async def exit_conversation(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+    # Send confirmation message
     await query.edit_message_text(
-        "Thank you for using BitAI! 🤖\n\n"
-        "Send /start anytime to continue setup.\n\n"
-        "Happy trading! 🚀"
+        "✅ *Great! Step 1 completed!*\n\nMoving to Step 2...",
+        parse_mode='Markdown'
     )
-
-def schedule_reminder(user_id: int, step: str, context: ContextTypes.DEFAULT_TYPE):
-    """Schedule 6-hour reminder for incomplete task"""
-    if user_id not in user_reminders:
-        user_reminders[user_id] = {}
     
-    if step not in user_reminders[user_id]:
-        user_reminders[user_id][step] = True
-        # Schedule reminder after 6 hours
-        context.job_queue.run_once(
-            send_reminder, 
-            when=timedelta(seconds=6*3600),
-            data={"user_id": user_id, "step": step}
-        )
-
-async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
-    """Send reminder to user"""
-    job_data = context.job.data
-    user_id = job_data["user_id"]
-    step = job_data["step"]
+    # Wait 1 second then show next step
+    import asyncio
+    await asyncio.sleep(1)
     
-    # Check if task is still incomplete
-    if user_id in user_data and user_data[user_id].get("tasks", {}).get(step) not in ["done", "skipped"]:
-        reminder_msgs = {
-            "step1": "⏰ *Reminder:* Have you created your Binance account? Complete Step 1 to continue with BitAI setup.",
-            "step2": "⏰ *Reminder:* Have you activated your BitAI license? Complete Step 2 to unlock AI trading.",
-            "step3": "⏰ *Reminder:* Have you enabled Binance Futures? Complete Step 3 to proceed.",
-            "step4": "⏰ *Reminder:* Have you connected your API keys? Complete Step 4 for BitAI to start trading.",
-            "step5": "⏰ *Reminder:* Have you transferred USDT to Futures Wallet? Complete Step 5 to fund your trading."
-        }
-        
-        keyboard = [[InlineKeyboardButton("📋 Continue Setup", callback_data="resume")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        try:
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=reminder_msgs.get(step, f"⏰ Reminder: Please complete {step} to continue BitAI setup."),
-                reply_markup=reply_markup,
-                parse_mode='Markdown'
-            )
-            # Schedule another reminder in 6 hours
-            context.job_queue.run_once(
-                send_reminder,
-                when=timedelta(seconds=6*3600),
-                data={"user_id": user_id, "step": step}
-            )
-        except Exception as e:
-            logger.error(f"Failed to send reminder to {user_id}: {e}")
+    # Show Step 2
+    await show_step2(update, context)
 
-async def resume_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Resume setup from current step"""
+async def step1_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User skipped Step 1"""
     query = update.callback_query
     await query.answer()
-    user_id = query.from_user.id
     
-    if user_id not in user_data:
-        await show_welcome(update, context)
-        return
+    await query.edit_message_text(
+        "⏩ *Step 1 skipped*\n\nMoving to Step 2...",
+        parse_mode='Markdown'
+    )
     
-    tasks = user_data[user_id].get("tasks", {})
+    import asyncio
+    await asyncio.sleep(1)
     
-    if tasks.get("step1") not in ["done", "skipped"]:
-        await show_step1(update, context)
-    elif tasks.get("step2") not in ["done", "skipped"]:
-        await show_step2(update, context)
-    elif tasks.get("step3") not in ["done", "skipped"]:
-        await show_step3(update, context)
-    elif tasks.get("step4") not in ["done", "skipped"]:
-        await show_step4(update, context)
-    elif tasks.get("step5") not in ["done", "skipped"]:
-        await show_step5(update, context)
+    await show_step2(update, context)
+
+async def show_step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show Step 2"""
+    keyboard = [
+        [InlineKeyboardButton("📝 Register BitAI", url="https://app.bitai.com.sg/h5/#/pages/sign/sign?invite=888")],
+        [InlineKeyboardButton("📱 Download BitAI App", url="https://fir.bitai.app/app.html")],
+        [InlineKeyboardButton("✅ Done - I completed Step 2", callback_data="step2_done")],
+        [InlineKeyboardButton("⏩ Skip to Step 3", callback_data="step2_skip")],
+        [InlineKeyboardButton("◀️ Back to Step 1", callback_data="step1_back")],
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if update.callback_query:
+        await update.callback_query.edit_message_text(STEP2_MSG, reply_markup=reply_markup, parse_mode='Markdown')
     else:
-        await show_step6(update, context)
+        await update.message.reply_text(STEP2_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def step2_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User confirmed Step 2 is done"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "✅ *Great! Step 2 completed!*\n\nMoving to Step 3...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step3(update, context)
+
+async def step2_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User skipped Step 2"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "⏩ *Step 2 skipped*\n\nMoving to Step 3...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step3(update, context)
+
+async def show_step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show Step 3"""
+    keyboard = [
+        [InlineKeyboardButton("✅ Done - I enabled Futures", callback_data="step3_done")],
+        [InlineKeyboardButton("⏩ Skip to Step 4", callback_data="step3_skip")],
+        [InlineKeyboardButton("◀️ Back to Step 2", callback_data="step2_back")],
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if update.callback_query:
+        await update.callback_query.edit_message_text(STEP3_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await update.message.reply_text(STEP3_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def step3_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User confirmed Step 3 is done"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "✅ *Great! Step 3 completed!*\n\nMoving to Step 4...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step4(update, context)
+
+async def step3_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User skipped Step 3"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "⏩ *Step 3 skipped*\n\nMoving to Step 4...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step4(update, context)
+
+async def show_step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show Step 4"""
+    keyboard = [
+        [InlineKeyboardButton("✅ Done - I set up API Keys", callback_data="step4_done")],
+        [InlineKeyboardButton("⏩ Skip to Step 5", callback_data="step4_skip")],
+        [InlineKeyboardButton("◀️ Back to Step 3", callback_data="step3_back")],
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.callback_query:
+        await update.callback_query.edit_message_text(STEP4_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await update.message.reply_text(STEP4_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def step4_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User confirmed Step 4 is done"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "✅ *Great! Step 4 completed!*\n\nMoving to Step 5...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step5(update, context)
+
+async def step4_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User skipped Step 4"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "⏩ *Step 4 skipped*\n\nMoving to Step 5...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step5(update, context)
+
+async def show_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show Step 5"""
+    keyboard = [
+        [InlineKeyboardButton("✅ Done - I transferred USDT", callback_data="step5_done")],
+        [InlineKeyboardButton("⏩ Skip to Step 6", callback_data="step5_skip")],
+        [InlineKeyboardButton("◀️ Back to Step 4", callback_data="step4_back")],
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.callback_query:
+        await update.callback_query.edit_message_text(STEP5_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await update.message.reply_text(STEP5_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def step5_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User confirmed Step 5 is done"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "✅ *Great! Step 5 completed!*\n\nMoving to final Step 6...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step6(update, context)
+
+async def step5_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User skipped Step 5"""
+    query = update.callback_query
+    await query.answer()
+    
+    await query.edit_message_text(
+        "⏩ *Step 5 skipped*\n\nMoving to final Step 6...",
+        parse_mode='Markdown'
+    )
+    
+    import asyncio
+    await asyncio.sleep(1)
+    
+    await show_step6(update, context)
+
+async def show_step6(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show Step 6 - Final"""
+    keyboard = [
+        [InlineKeyboardButton("✅ Done - Setup Complete!", callback_data="step6_done")],
+        [InlineKeyboardButton("◀️ Back to Step 5", callback_data="step5_back")],
+        [InlineKeyboardButton("❓ FAQ", url="https://bitai.app/faq")],
+        [InlineKeyboardButton("📧 Email Support", url="mailto:info@bitai.app")],
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.callback_query:
+        await update.callback_query.edit_message_text(STEP6_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await update.message.reply_text(STEP6_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def step6_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """User completed all steps"""
+    query = update.callback_query
+    await query.answer()
+    
+    completion_msg = """🎉 *CONGRATULATIONS! Setup Complete!* 🎉
+
+You've successfully completed all steps!
+
+✨ *BitAI is now ready to:*
+• 📊 Analyze real-time market data
+• 🤖 Execute trades automatically
+• 💎 Run 24/7
+
+*Select your Risk Profile in the BitAI App to start trading!*
+
+Need help? Contact our support team anytime.
+
+Thank you for choosing BitAI! 🚀"""
+
+    keyboard = [
+        [InlineKeyboardButton("🆘 Contact Support", url="http://wa.me/6589691668")],
+        [InlineKeyboardButton("🏠 Restart Setup", callback_data="restart")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(completion_msg, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def restart_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Restart the entire setup"""
+    query = update.callback_query
+    await query.answer()
+    
+    await start(update, context)
+
+# Back navigation handlers
+async def back_to_step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await show_step1(update, context)
+
+async def back_to_step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await show_step2(update, context)
+
+async def back_to_step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await show_step3(update, context)
+
+async def back_to_step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await show_step4(update, context)
+
+async def back_to_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await show_step5(update, context)
 
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
+    """Start the bot"""
+    application = Application.builder().token(BOT_TOKEN).build()
     
     # Command handlers
-    app.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
     
     # Callback handlers
-    app.add_handler(CallbackQueryHandler(show_step1, pattern="^next_step_binance$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: confirm_step(u,c,1), pattern="^confirm_step1$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: skip_step(u,c,1), pattern="^skip_step1$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: confirm_step(u,c,2), pattern="^confirm_step2$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: skip_step(u,c,2), pattern="^skip_step2$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: confirm_step(u,c,3), pattern="^confirm_step3$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: skip_step(u,c,3), pattern="^skip_step3$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: confirm_step(u,c,4), pattern="^confirm_step4$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: skip_step(u,c,4), pattern="^skip_step4$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: confirm_step(u,c,5), pattern="^confirm_step5$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: skip_step(u,c,5), pattern="^skip_step5$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: back_step(u,c,2), pattern="^back_step2$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: back_step(u,c,3), pattern="^back_step3$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: back_step(u,c,4), pattern="^back_step4$"))
-    app.add_handler(CallbackQueryHandler(lambda u,c: back_step(u,c,5), pattern="^back_step5$"))
-    app.add_handler(CallbackQueryHandler(resume_setup, pattern="^resume$"))
-    app.add_handler(CallbackQueryHandler(exit_conversation, pattern="^exit$"))
+    application.add_handler(CallbackQueryHandler(show_step1, pattern="^next_step$"))
+    
+    # Step 1 handlers
+    application.add_handler(CallbackQueryHandler(step1_done, pattern="^step1_done$"))
+    application.add_handler(CallbackQueryHandler(step1_skip, pattern="^step1_skip$"))
+    application.add_handler(CallbackQueryHandler(back_to_step1, pattern="^step1_back$"))
+    
+    # Step 2 handlers
+    application.add_handler(CallbackQueryHandler(step2_done, pattern="^step2_done$"))
+    application.add_handler(CallbackQueryHandler(step2_skip, pattern="^step2_skip$"))
+    application.add_handler(CallbackQueryHandler(back_to_step2, pattern="^step2_back$"))
+    
+    # Step 3 handlers
+    application.add_handler(CallbackQueryHandler(step3_done, pattern="^step3_done$"))
+    application.add_handler(CallbackQueryHandler(step3_skip, pattern="^step3_skip$"))
+    application.add_handler(CallbackQueryHandler(back_to_step3, pattern="^step3_back$"))
+    
+    # Step 4 handlers
+    application.add_handler(CallbackQueryHandler(step4_done, pattern="^step4_done$"))
+    application.add_handler(CallbackQueryHandler(step4_skip, pattern="^step4_skip$"))
+    application.add_handler(CallbackQueryHandler(back_to_step4, pattern="^step4_back$"))
+    
+    # Step 5 handlers
+    application.add_handler(CallbackQueryHandler(step5_done, pattern="^step5_done$"))
+    application.add_handler(CallbackQueryHandler(step5_skip, pattern="^step5_skip$"))
+    application.add_handler(CallbackQueryHandler(back_to_step5, pattern="^step5_back$"))
+    
+    # Step 6 handlers
+    application.add_handler(CallbackQueryHandler(step6_done, pattern="^step6_done$"))
+    application.add_handler(CallbackQueryHandler(restart_setup, pattern="^restart$"))
     
     # Start bot
     print("Bot is running...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
