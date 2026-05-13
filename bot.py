@@ -1,5 +1,6 @@
 import logging
 import os
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
@@ -15,53 +16,53 @@ logger = logging.getLogger(__name__)
 # Store user progress
 user_progress = {}
 
-# Welcome Message
-WELCOME_MSG = """🚀 *Welcome to BitAI by Affinity AI*
+# Welcome Message (plain text - no Markdown)
+WELCOME_MSG = """🚀 Welcome to BitAI by Affinity AI
 
 Most crypto traders don't lose because they lack knowledge.
 They lose because manual trading is emotional, bot settings are messy, and execution comes too late.
 
 It's time to upgrade to BitAI - built to analyze real-time market data and execute your trades automatically, 24/7.
 
-📹 *Video:* https://drive.google.com/file/d/1STOhv9qCUe5RxnwvSF9koJoLswOLIpD_/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1STOhv9qCUe5RxnwvSF9koJoLswOLIpD_/view?usp=sharing"""
 
-# Step Messages
-STEP1_MSG = """📌 *Step 1/6: Prepare Your Binance Account*
+# Step Messages (plain text - no Markdown)
+STEP1_MSG = """📌 Step 1/6: Prepare Your Binance Account
 
 To start using BitAI, you need a Binance account with KYC verification completed.
 
-✅ *Already have a verified Binance account?*
+✅ Already have a verified Binance account?
 You may skip this step and continue to BitAI License Activation.
 
-📹 *Video:* https://drive.google.com/file/d/1TGACWYMSRR2x8NLkQgA3-_JgH-fUJUBg/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1TGACWYMSRR2x8NLkQgA3-_JgH-fUJUBg/view?usp=sharing"""
 
-STEP2_MSG = """📌 *Step 2/6: BitAI License Activation*
+STEP2_MSG = """📌 Step 2/6: BitAI License Activation
 
 To unlock BitAI's full auto AI trading, activate your BitAI License inside your BitAI app.
 
 Once activated, you can proceed to activate & enable your Binance Futures.
 
-📹 *Video:* https://drive.google.com/file/d/1VLidHqhUWQv6K_6Q0s3GYHVKPBgkeVxt/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1VLidHqhUWQv6K_6Q0s3GYHVKPBgkeVxt/view?usp=sharing"""
 
-STEP3_MSG = """📌 *Step 3/6: Activate & Enable Binance Futures*
+STEP3_MSG = """📌 Step 3/6: Activate & Enable Binance Futures
 
 Before BitAI can execute, you need to activate Binance Futures inside your Binance account.
 
 Once Futures is enabled, you can continue to the next step and create your Binance API connection.
 
-📹 *Video:* https://drive.google.com/file/d/1pSg-u3q4YvoZHB3DETFyBQFjRGczoCJj/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1pSg-u3q4YvoZHB3DETFyBQFjRGczoCJj/view?usp=sharing"""
 
-STEP4_MSG = """📌 *Step 4/6: Set Up Your API Keys*
+STEP4_MSG = """📌 Step 4/6: Set Up Your API Keys
 
 Next, create your Binance API Keys and connect them to your BitAI account.
 
 This allows BitAI to analyze real-time market data and execute based on your selected risk profile.
 
-⚠️ *Make sure your API Keys are kept private and only connected inside the official BitAI platform.*
+⚠️ Make sure your API Keys are kept private and only connected inside the official BitAI platform.
 
-📹 *Video:* https://drive.google.com/file/d/1nUcCkcp_jv6FN6hwHxIADmxktlG6-M6k/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1nUcCkcp_jv6FN6hwHxIADmxktlG6-M6k/view?usp=sharing"""
 
-STEP5_MSG = """📌 *Step 5/6: Transfer USDT to Binance Futures*
+STEP5_MSG = """📌 Step 5/6: Transfer USDT to Binance Futures
 
 Before BitAI can execute, make sure your USDT is transferred into your own Binance Futures Wallet.
 
@@ -69,9 +70,9 @@ This will be the capital used for BitAI's AI-driven execution based on your sele
 
 Once completed, continue to Select Risk Profile.
 
-📹 *Video:* https://drive.google.com/file/d/1bRXrOM-I0UuoBWetbX-EcspvAniU6x4D/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1bRXrOM-I0UuoBWetbX-EcspvAniU6x4D/view?usp=sharing"""
 
-STEP6_MSG = """📌 *Step 6/6: Select Your Risk Profile*
+STEP6_MSG = """📌 Step 6/6: Select Your Risk Profile
 
 Choose your preferred BitAI Risk Profile based on your capital, goals, and risk appetite.
 
@@ -79,7 +80,7 @@ BitAI will execute according to the risk level you select.
 
 Once done, BitAI will start to analyze real time market data and execute your trades automatically! 🎉
 
-📹 *Video:* https://drive.google.com/file/d/1-WystTVv0Wwawhak6xBZlU0yXyTChZmP/view?usp=sharing"""
+📹 Video: https://drive.google.com/file/d/1-WystTVv0Wwawhak6xBZlU0yXyTChZmP/view?usp=sharing"""
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command"""
@@ -94,7 +95,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(WELCOME_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+    await update.message.reply_text(WELCOME_MSG, reply_markup=reply_markup)
 
 async def show_step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show Step 1"""
@@ -108,9 +109,9 @@ async def show_step1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP1_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP1_MSG, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(STEP1_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.message.reply_text(STEP1_MSG, reply_markup=reply_markup)
 
 async def step1_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 1 is done"""
@@ -118,11 +119,9 @@ async def step1_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ *Great! Step 1 completed!*\n\nMoving to Step 2...",
-        parse_mode='Markdown'
+        "✅ Great! Step 1 completed!\n\nMoving to Step 2..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step2(update, context)
 
@@ -132,11 +131,9 @@ async def step1_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ *Step 1 skipped*\n\nMoving to Step 2...",
-        parse_mode='Markdown'
+        "⏩ Step 1 skipped\n\nMoving to Step 2..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step2(update, context)
 
@@ -153,9 +150,9 @@ async def show_step2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP2_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP2_MSG, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(STEP2_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.message.reply_text(STEP2_MSG, reply_markup=reply_markup)
 
 async def step2_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 2 is done"""
@@ -163,11 +160,9 @@ async def step2_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ *Great! Step 2 completed!*\n\nMoving to Step 3...",
-        parse_mode='Markdown'
+        "✅ Great! Step 2 completed!\n\nMoving to Step 3..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step3(update, context)
 
@@ -177,11 +172,9 @@ async def step2_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ *Step 2 skipped*\n\nMoving to Step 3...",
-        parse_mode='Markdown'
+        "⏩ Step 2 skipped\n\nMoving to Step 3..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step3(update, context)
 
@@ -196,9 +189,9 @@ async def show_step3(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP3_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP3_MSG, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(STEP3_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.message.reply_text(STEP3_MSG, reply_markup=reply_markup)
 
 async def step3_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 3 is done"""
@@ -206,11 +199,9 @@ async def step3_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ *Great! Step 3 completed!*\n\nMoving to Step 4...",
-        parse_mode='Markdown'
+        "✅ Great! Step 3 completed!\n\nMoving to Step 4..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step4(update, context)
 
@@ -220,11 +211,9 @@ async def step3_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ *Step 3 skipped*\n\nMoving to Step 4...",
-        parse_mode='Markdown'
+        "⏩ Step 3 skipped\n\nMoving to Step 4..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step4(update, context)
 
@@ -239,9 +228,9 @@ async def show_step4(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP4_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP4_MSG, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(STEP4_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.message.reply_text(STEP4_MSG, reply_markup=reply_markup)
 
 async def step4_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 4 is done"""
@@ -249,11 +238,9 @@ async def step4_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ *Great! Step 4 completed!*\n\nMoving to Step 5...",
-        parse_mode='Markdown'
+        "✅ Great! Step 4 completed!\n\nMoving to Step 5..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step5(update, context)
 
@@ -263,11 +250,9 @@ async def step4_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ *Step 4 skipped*\n\nMoving to Step 5...",
-        parse_mode='Markdown'
+        "⏩ Step 4 skipped\n\nMoving to Step 5..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step5(update, context)
 
@@ -282,9 +267,9 @@ async def show_step5(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP5_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP5_MSG, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(STEP5_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.message.reply_text(STEP5_MSG, reply_markup=reply_markup)
 
 async def step5_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User confirmed Step 5 is done"""
@@ -292,11 +277,9 @@ async def step5_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "✅ *Great! Step 5 completed!*\n\nMoving to final Step 6...",
-        parse_mode='Markdown'
+        "✅ Great! Step 5 completed!\n\nMoving to final Step 6..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step6(update, context)
 
@@ -306,11 +289,9 @@ async def step5_skip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     await query.edit_message_text(
-        "⏩ *Step 5 skipped*\n\nMoving to final Step 6...",
-        parse_mode='Markdown'
+        "⏩ Step 5 skipped\n\nMoving to final Step 6..."
     )
     
-    import asyncio
     await asyncio.sleep(1)
     await show_step6(update, context)
 
@@ -326,25 +307,25 @@ async def show_step6(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.callback_query:
-        await update.callback_query.edit_message_text(STEP6_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.callback_query.edit_message_text(STEP6_MSG, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(STEP6_MSG, reply_markup=reply_markup, parse_mode='Markdown')
+        await update.message.reply_text(STEP6_MSG, reply_markup=reply_markup)
 
 async def step6_done(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """User completed all steps"""
     query = update.callback_query
     await query.answer()
     
-    completion_msg = """🎉 *CONGRATULATIONS! Setup Complete!* 🎉
+    completion_msg = """🎉 CONGRATULATIONS! Setup Complete! 🎉
 
 You've successfully completed all steps!
 
-✨ *BitAI is now ready to:*
+✨ BitAI is now ready to:
 • 📊 Analyze real-time market data
 • 🤖 Execute trades automatically
 • 💎 Run 24/7
 
-*Select your Risk Profile in the BitAI App to start trading!*
+Select your Risk Profile in the BitAI App to start trading!
 
 Need help? Contact our support team anytime.
 
@@ -356,7 +337,7 @@ Thank you for choosing BitAI! 🚀"""
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(completion_msg, reply_markup=reply_markup, parse_mode='Markdown')
+    await query.edit_message_text(completion_msg, reply_markup=reply_markup)
 
 async def restart_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Restart the entire setup"""
